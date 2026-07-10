@@ -50,10 +50,6 @@ function populateBrands() {
 document.getElementById('brandSelect').addEventListener('change', function() {
     const brandKey = this.value;
     const modelSelect = document.getElementById('modelSelect');
-    const priceFrom = document.getElementById('priceFrom');
-    const priceTo = document.getElementById('priceTo');
-    const yearFrom = document.getElementById('yearFrom');
-    const yearTo = document.getElementById('yearTo');
     
     if (!brandKey) {
         modelSelect.disabled = true;
@@ -146,7 +142,7 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         url += `&year_to=${yearToVal}`;
     }
     
-    // Добавляем регион
+    // Добавляем регион (коды регионов для AV.BY)
     const regionVal = region.value;
     if (regionVal) {
         url += `&region=${regionVal}`;
@@ -178,7 +174,9 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         } else {
             // Если запущено в браузере (для отладки)
             console.log('🔗 Ссылка для /track:', url);
-            alert('Ссылка скопирована в консоль (для отладки)');
+            
+            // Показываем ссылку в alert для удобства
+            alert(`Ссылка скопирована в консоль (F12 → Console)\n\n${url}`);
             
             // Открываем ссылку в новой вкладке для проверки
             window.open(url, '_blank');
