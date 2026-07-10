@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Авто-Хантер — Настройка фильтра</title>
+    
+    <!-- Подключаем Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Подключаем стили -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="header">
+            <div class="logo">🚗 Авто-Хантер</div>
+            <div class="subtitle">Настройка фильтра для AV.BY</div>
+        </div>
+
+        <!-- Форма -->
+        <form id="filterForm">
+            <!-- Выбор марки -->
+            <div class="form-group">
+                <label for="brandSelect">Марка</label>
+                <select id="brandSelect" required>
+                    <option value="">Выберите марку</option>
+                </select>
+            </div>
+
+            <!-- Выбор модели -->
+            <div class="form-group">
+                <label for="modelSelect">Модель</label>
+                <select id="modelSelect" disabled>
+                    <option value="">Сначала выберите марку</option>
+                </select>
+            </div>
+
+            <!-- Цена от/до -->
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="priceFrom">Цена от</label>
+                    <input type="number" id="priceFrom" placeholder="0" min="0">
+                </div>
+                <div class="form-group half">
+                    <label for="priceTo">Цена до</label>
+                    <input type="number" id="priceTo" placeholder="100000" min="0">
+                </div>
+            </div>
+
+            <!-- Год от/до -->
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="yearFrom">Год от</label>
+                    <input type="number" id="yearFrom" placeholder="2000" min="1980" max="2026">
+                </div>
+                <div class="form-group half">
+                    <label for="yearTo">Год до</label>
+                    <input type="number" id="yearTo" placeholder="2026" min="1980" max="2026">
+                </div>
+            </div>
+
+            <!-- Регион -->
+            <div class="form-group">
+                <label for="region">Регион</label>
+                <select id="region">
+                    <option value="">Все регионы</option>
+                    <option value="1">Брестская</option>
+                    <option value="2">Витебская</option>
+                    <option value="3">Гомельская</option>
+                    <option value="4">Гродненская</option>
+                    <option value="5">Могилёвская</option>
+                    <option value="6">Минская</option>
+                    <option value="7">Минск</option>
+                </select>
+            </div>
+
+            <!-- Кнопка -->
+            <button type="submit" class="btn-primary" id="submitBtn">
+                🎯 Начать охоту
+            </button>
+        </form>
+
+        <!-- Сообщение об ошибке -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Футер -->
+        <div class="footer">
+            <span>Первые 3 фильтра бесплатно</span>
+        </div>
+    </div>
+
+    <!-- Подключаем логику -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "brands": {
+    "audi": {
+      "id": 6,
+      "name": "Audi",
+      "models": {
+        "a4": {"id": 4637, "name": "A4"},
+        "a6": {"id": 4640, "name": "A6"},
+        "q5": {"id": 4647, "name": "Q5"},
+        "q7": {"id": 4648, "name": "Q7"},
+        "tt": {"id": 4664, "name": "TT"}
+      }
+    },
+    "bmw": {
+      "id": 8,
+      "name": "BMW",
+      "models": {
+        "3_series": {"id": 5864, "name": "3 серия"},
+        "5_series": {"id": 5865, "name": "5 серия"},
+        "7_series": {"id": 5866, "name": "7 серия"},
+        "x5": {"id": 5869, "name": "X5"},
+        "x6": {"id": 5870, "name": "X6"}
+      }
+    },
+    "volkswagen": {
+      "id": 84,
+      "name": "Volkswagen",
+      "models": {
+        "golf": {"id": 27800, "name": "Golf"},
+        "passat": {"id": 27807, "name": "Passat"},
+        "tiguan": {"id": 27819, "name": "Tiguan"},
+        "touareg": {"id": 27820, "name": "Touareg"}
+      }
+    },
+    "mercedes": {
+      "id": 20,
+      "name": "Mercedes-Benz",
+      "models": {
+        "c_class": {"id": 27462, "name": "C-класс"},
+        "e_class": {"id": 27463, "name": "E-класс"},
+        "g_class": {"id": 27467, "name": "G-класс"},
+        "s_class": {"id": 27470, "name": "S-класс"}
+      }
+    },
+    "peugeot": {
+      "id": 989,
+      "name": "Peugeot",
+      "models": {
+        "308": {"id": 991, "name": "308"},
+        "408": {"id": 995, "name": "408"},
+        "607": {"id": 1006, "name": "607"},
+        "3008": {"id": 990, "name": "3008"}
+      }
+    },
+    "toyota": {
+      "id": 136,
+      "name": "Toyota",
+      "models": {
+        "camry": {"id": 14198, "name": "Camry"},
+        "corolla": {"id": 14202, "name": "Corolla"},
+        "land_cruiser": {"id": 14214, "name": "Land Cruiser"},
+        "rav4": {"id": 14217, "name": "RAV4"}
+      }
+    }
+  }
+}
