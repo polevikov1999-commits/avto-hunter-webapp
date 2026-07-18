@@ -10,8 +10,19 @@ let currentBrandKey = null;
 async function loadData() {
     try {
         const response = await fetch('data.json');
-        if (!response.ok) throw new Error('Не удалось загрузить данные');
-        brandsData = await response.json();
+        if (!response.ok) {
+            console.error(`❌ Ошибка загрузки: HTTP ${response.status}`);
+            throw new Error('Не удалось загрузить данные');
+        }
+        const data = await response.json();
+        console.log('📦 Полученные данные:', data);
+        
+        if (!data.brands) {
+            console.error('❌ В данных нет поля "brands"');
+            throw new Error('Некорректная структура данных');
+        }
+        
+        brandsData = data;
         console.log('✅ Данные загружены:', Object.keys(brandsData.brands).length, 'марок');
         return true;
     } catch (error) {
@@ -27,12 +38,24 @@ async function loadData() {
 
 function populateBrands() {
     const select = document.getElementById('brandSelect');
+    if (!select) {
+        console.error('❌ Не найден элемент brandSelect');
+        return;
+    }
+    
     select.innerHTML = '<option value="">Выберите марку</option>';
+    
+    if (!brandsData.brands || Object.keys(brandsData.brands).length === 0) {
+        console.error('❌ Нет данных для заполнения марок');
+        return;
+    }
     
     // Сортируем марки по названию
     const sortedBrands = Object.keys(brandsData.brands).sort((a, b) => {
         return brandsData.brands[a].name.localeCompare(brandsData.brands[b].name);
     });
+    
+    console.log('🔄 Заполняю марки:', sortedBrands.length);
     
     for (const key of sortedBrands) {
         const brand = brandsData.brands[key];
@@ -51,6 +74,8 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     const brandKey = this.value;
     const modelSelect = document.getElementById('modelSelect');
     
+    console.log('🔍 Выбрана марка:', brandKey);
+    
     if (!brandKey) {
         modelSelect.disabled = true;
         modelSelect.innerHTML = '<option value="">Сначала выберите марку</option>';
@@ -59,17 +84,35 @@ document.getElementById('brandSelect').addEventListener('change', function() {
         return;
     }
     
+    const brand = brandsData.brands[brandKey];
+    if (!brand) {
+        console.error('❌ Марка не найдена:', brandKey);
+        return;
+    }
+    
     currentBrandKey = brandKey;
-    currentBrandId = brandsData.brands[brandKey].id;
+    currentBrandId = brand.id;
+    
+    console.log('📌 ID марки:', currentBrandId);
+    console.log('📌 Модели:', brand.models);
     
     // Заполняем модели
-    const models = brandsData.brands[brandKey].models;
+    const models = brand.models;
+    if (!models || Object.keys(models).length === 0) {
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="">Нет моделей для этой марки</option>';
+        return;
+    }
+    
     modelSelect.disabled = false;
     modelSelect.innerHTML = '<option value="">Выберите модель</option>';
     
+    // Сортируем модели по названию
     const sortedModels = Object.keys(models).sort((a, b) => {
         return models[a].name.localeCompare(models[b].name);
     });
+    
+    console.log('🔄 Заполняю модели:', sortedModels.length);
     
     for (const modelKey of sortedModels) {
         const model = models[modelKey];
@@ -97,32 +140,37 @@ document.getElementById('filterForm').addEventListener('submit', async function(
     const submitBtn = document.getElementById('submitBtn');
     const errorDiv = document.getElementById('errorMessage');
     
-    // Скрываем старые ошибки
     errorDiv.classList.remove('show');
     errorDiv.style.display = 'none';
     
-    // Проверка: выбрана ли марка
     const brandKey = brandSelect.value;
     if (!brandKey) {
         showError('Пожалуйста, выберите марку');
         return;
     }
     
-    // Проверка: выбрана ли модель
     const modelKey = modelSelect.value;
     if (!modelKey) {
         showError('Пожалуйста, выберите модель');
         return;
     }
     
-    // Получаем коды
-    const brandId = brandsData.brands[brandKey].id;
-    const modelId = brandsData.brands[brandKey].models[modelKey].id;
+    const brand = brandsData.brands[brandKey];
+    const model = brand.models[modelKey];
     
-    // Собираем ссылку
+    if (!brand || !model) {
+        showError('Ошибка: данные не найдены');
+        return;
+    }
+    
+    const brandId = brand.id;
+    const modelId = model.id;
+    
+    console.log('🔗 Формирую ссылку для:', brand.name, model.name);
+    console.log('   brandId:', brandId, 'modelId:', modelId);
+    
     let url = `https://cars.av.by/filter?brands[0][brand]=${brandId}&brands[0][model]=${modelId}`;
     
-    // Добавляем цену
     const priceFromVal = priceFrom.value.trim();
     const priceToVal = priceTo.value.trim();
     if (priceFromVal && parseInt(priceFromVal) >= 0) {
@@ -132,7 +180,6 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         url += `&price_to=${priceToVal}`;
     }
     
-    // Добавляем год
     const yearFromVal = yearFrom.value.trim();
     const yearToVal = yearTo.value.trim();
     if (yearFromVal && parseInt(yearFromVal) >= 1980) {
@@ -142,43 +189,32 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         url += `&year_to=${yearToVal}`;
     }
     
-    // Добавляем регион (коды регионов для AV.BY)
     const regionVal = region.value;
     if (regionVal) {
         url += `&region=${regionVal}`;
     }
     
-    // Сортировка: сначала новые
     url += `&sort=4`;
     
-    // Показываем состояние загрузки
+    console.log('✅ Готовая ссылка:', url);
+    
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Собираю ссылку...';
     
     try {
-        // Получаем информацию о Telegram WebApp
         const tg = window.Telegram.WebApp;
         
-        // Если мы в Telegram, отправляем данные через WebApp
         if (tg) {
-            // Отправляем ссылку в бота
             tg.sendData(JSON.stringify({
                 action: 'track',
                 url: url,
-                brand: brandsData.brands[brandKey].name,
-                model: brandsData.brands[brandKey].models[modelKey].name
+                brand: brand.name,
+                model: model.name
             }));
-            
-            // Закрываем мини-приложение
             tg.close();
         } else {
-            // Если запущено в браузере (для отладки)
             console.log('🔗 Ссылка для /track:', url);
-            
-            // Показываем ссылку в alert для удобства
-            alert(`Ссылка скопирована в консоль (F12 → Console)\n\n${url}`);
-            
-            // Открываем ссылку в новой вкладке для проверки
+            alert(`Ссылка готова!\n\n${url}\n\nСкопируйте и отправьте боту команду /track`);
             window.open(url, '_blank');
         }
         
@@ -206,7 +242,8 @@ function showError(message) {
 // ============================================================
 
 async function init() {
-    // Настраиваем Telegram WebApp
+    console.log('🚀 Инициализация мини-приложения...');
+    
     const tg = window.Telegram.WebApp;
     if (tg) {
         tg.ready();
@@ -214,11 +251,13 @@ async function init() {
         console.log('✅ Telegram WebApp инициализирован');
     }
     
-    // Загружаем данные
     const loaded = await loadData();
     if (loaded) {
         populateBrands();
         console.log('✅ Мини-приложение готово');
+    } else {
+        console.error('❌ Не удалось загрузить данные');
+        showError('Не удалось загрузить данные. Проверьте файл data.json');
     }
 }
 
