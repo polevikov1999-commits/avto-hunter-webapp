@@ -71,7 +71,6 @@ function populateBrands() {
     const brandKeys = Object.keys(brandsData.brands);
     console.log('🔄 Сортирую марки:', brandKeys.length);
     
-    // Простая сортировка с проверкой
     const sortedBrands = brandKeys.sort(function(a, b) {
         const brandA = brandsData.brands[a];
         const brandB = brandsData.brands[b];
@@ -138,7 +137,6 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     
     console.log('📌 ID марки:', currentBrandId);
     
-    // Проверяем, есть ли модели
     if (!brand.models) {
         console.warn('⚠️ У марки нет поля models');
         modelSelect.disabled = true;
@@ -155,23 +153,10 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     
     console.log('🔄 Модели для', brandKey, ':', modelKeys);
     
-    // Сортируем модели с проверкой
+    // Сортируем модели по названию (по ключам)
     const sortedModels = modelKeys.sort(function(a, b) {
-        const modelA = brand.models[a];
-        const modelB = brand.models[b];
-        
-        let nameA = a;
-        let nameB = b;
-        
-        if (modelA && typeof modelA === 'object') {
-            nameA = modelA.name || a;
-        }
-        if (modelB && typeof modelB === 'object') {
-            nameB = modelB.name || b;
-        }
-        
         try {
-            return nameA.localeCompare(nameB);
+            return a.localeCompare(b);
         } catch (e) {
             console.warn('Ошибка сортировки модели:', a, b, e);
             return 0;
@@ -184,17 +169,9 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     console.log('🔄 Заполняю модели:', sortedModels.length);
     
     for (const modelKey of sortedModels) {
-        const model = brand.models[modelKey];
         const option = document.createElement('option');
-        option.value = modelKey;
-        
-        if (model && typeof model === 'object' && model.name) {
-            option.textContent = model.name;
-        } else if (typeof model === 'string') {
-            option.textContent = model;
-        } else {
-            option.textContent = modelKey;
-        }
+        option.value = modelKey;  // ключ — это название модели
+        option.textContent = modelKey;  // показываем название модели
         modelSelect.appendChild(option);
     }
 });
@@ -237,24 +214,21 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         return;
     }
     
-    const model = brand.models[modelKey];
-    if (!model) {
-        showError('Ошибка: модель не найдена');
+    const modelId = brand.models[modelKey];
+    if (!modelId) {
+        showError('Ошибка: ID модели не найден');
         return;
     }
     
     const brandId = getItemId(brand);
-    const modelId = getItemId(model);
-    
-    if (!brandId || !modelId) {
-        showError('Ошибка: не удалось получить ID марки или модели');
+    if (!brandId) {
+        showError('Ошибка: ID марки не найден');
         return;
     }
     
     const brandName = getItemName(brand, brandKey);
-    const modelName = getItemName(model, modelKey);
     
-    console.log('🔗 Формирую ссылку для:', brandName, modelName);
+    console.log('🔗 Формирую ссылку для:', brandName, modelKey);
     console.log('   brandId:', brandId, 'modelId:', modelId);
     
     let url = `https://cars.av.by/filter?brands[0][brand]=${brandId}&brands[0][model]=${modelId}`;
@@ -297,7 +271,7 @@ document.getElementById('filterForm').addEventListener('submit', async function(
                 action: 'track',
                 url: url,
                 brand: brandName,
-                model: modelName
+                model: modelKey
             }));
             tg.close();
         } else {
