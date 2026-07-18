@@ -52,7 +52,9 @@ function populateBrands() {
     
     // Сортируем марки по названию
     const sortedBrands = Object.keys(brandsData.brands).sort((a, b) => {
-        return brandsData.brands[a].name.localeCompare(brandsData.brands[b].name);
+        const nameA = brandsData.brands[a].name || a;
+        const nameB = brandsData.brands[b].name || b;
+        return nameA.localeCompare(nameB);
     });
     
     console.log('🔄 Заполняю марки:', sortedBrands.length);
@@ -61,7 +63,7 @@ function populateBrands() {
         const brand = brandsData.brands[key];
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = brand.name;
+        option.textContent = brand.name || key;
         select.appendChild(option);
     }
 }
@@ -94,7 +96,6 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     currentBrandId = brand.id;
     
     console.log('📌 ID марки:', currentBrandId);
-    console.log('📌 Модели:', brand.models);
     
     // Заполняем модели
     const models = brand.models;
@@ -109,7 +110,12 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     
     // Сортируем модели по названию
     const sortedModels = Object.keys(models).sort((a, b) => {
-        return models[a].name.localeCompare(models[b].name);
+        // Получаем название модели, если оно есть
+        const modelA = models[a];
+        const modelB = models[b];
+        const nameA = (modelA && typeof modelA === 'object' && modelA.name) || a;
+        const nameB = (modelB && typeof modelB === 'object' && modelB.name) || b;
+        return nameA.localeCompare(nameB);
     });
     
     console.log('🔄 Заполняю модели:', sortedModels.length);
@@ -118,7 +124,14 @@ document.getElementById('brandSelect').addEventListener('change', function() {
         const model = models[modelKey];
         const option = document.createElement('option');
         option.value = modelKey;
-        option.textContent = model.name;
+        
+        // Если модель — объект с полем name, используем его
+        if (model && typeof model === 'object' && model.name) {
+            option.textContent = model.name;
+        } else {
+            // Иначе используем ключ
+            option.textContent = modelKey;
+        }
         modelSelect.appendChild(option);
     }
 });
@@ -156,17 +169,23 @@ document.getElementById('filterForm').addEventListener('submit', async function(
     }
     
     const brand = brandsData.brands[brandKey];
-    const model = brand.models[modelKey];
-    
-    if (!brand || !model) {
-        showError('Ошибка: данные не найдены');
+    if (!brand) {
+        showError('Ошибка: марка не найдена');
         return;
     }
     
-    const brandId = brand.id;
-    const modelId = model.id;
+    const model = brand.models[modelKey];
+    if (!model) {
+        showError('Ошибка: модель не найдена');
+        return;
+    }
     
-    console.log('🔗 Формирую ссылку для:', brand.name, model.name);
+    // Получаем ID марки и модели
+    const brandId = brand.id;
+    // Если модель — объект с полем id, используем его
+    const modelId = (model && typeof model === 'object' && model.id) || model;
+    
+    console.log('🔗 Формирую ссылку для:', brand.name || brandKey, model.name || modelKey);
     console.log('   brandId:', brandId, 'modelId:', modelId);
     
     let url = `https://cars.av.by/filter?brands[0][brand]=${brandId}&brands[0][model]=${modelId}`;
@@ -208,8 +227,8 @@ document.getElementById('filterForm').addEventListener('submit', async function(
             tg.sendData(JSON.stringify({
                 action: 'track',
                 url: url,
-                brand: brand.name,
-                model: model.name
+                brand: brand.name || brandKey,
+                model: (model && typeof model === 'object' && model.name) || modelKey
             }));
             tg.close();
         } else {
