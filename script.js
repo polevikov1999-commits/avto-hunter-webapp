@@ -33,7 +33,25 @@ async function loadData() {
 }
 
 // ============================================================
-// 2. Заполнение списка марок
+// 2. Вспомогательная функция для безопасного получения названия
+// ============================================================
+
+function getItemName(item, defaultName) {
+    if (!item) return defaultName;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item.name) return item.name;
+    return defaultName;
+}
+
+function getItemId(item) {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item.id) return item.id;
+    return null;
+}
+
+// ============================================================
+// 3. Заполнение списка марок
 // ============================================================
 
 function populateBrands() {
@@ -52,8 +70,8 @@ function populateBrands() {
     
     // Сортируем марки по названию
     const sortedBrands = Object.keys(brandsData.brands).sort((a, b) => {
-        const nameA = brandsData.brands[a].name || a;
-        const nameB = brandsData.brands[b].name || b;
+        const nameA = getItemName(brandsData.brands[a], a);
+        const nameB = getItemName(brandsData.brands[b], b);
         return nameA.localeCompare(nameB);
     });
     
@@ -63,13 +81,13 @@ function populateBrands() {
         const brand = brandsData.brands[key];
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = brand.name || key;
+        option.textContent = getItemName(brand, key);
         select.appendChild(option);
     }
 }
 
 // ============================================================
-// 3. Обработка выбора марки
+// 4. Обработка выбора марки
 // ============================================================
 
 document.getElementById('brandSelect').addEventListener('change', function() {
@@ -93,13 +111,21 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     }
     
     currentBrandKey = brandKey;
-    currentBrandId = brand.id;
+    currentBrandId = getItemId(brand);
     
     console.log('📌 ID марки:', currentBrandId);
+    console.log('📌 Данные марки:', brand);
     
-    // Заполняем модели
-    const models = brand.models;
-    if (!models || Object.keys(models).length === 0) {
+    // Проверяем, есть ли модели
+    if (!brand.models) {
+        console.warn('⚠️ У марки нет поля models');
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="">Нет моделей для этой марки</option>';
+        return;
+    }
+    
+    const modelKeys = Object.keys(brand.models);
+    if (modelKeys.length === 0) {
         modelSelect.disabled = true;
         modelSelect.innerHTML = '<option value="">Нет моделей для этой марки</option>';
         return;
@@ -109,35 +135,27 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     modelSelect.innerHTML = '<option value="">Выберите модель</option>';
     
     // Сортируем модели по названию
-    const sortedModels = Object.keys(models).sort((a, b) => {
-        // Получаем название модели, если оно есть
-        const modelA = models[a];
-        const modelB = models[b];
-        const nameA = (modelA && typeof modelA === 'object' && modelA.name) || a;
-        const nameB = (modelB && typeof modelB === 'object' && modelB.name) || b;
+    const sortedModels = modelKeys.sort((a, b) => {
+        const modelA = brand.models[a];
+        const modelB = brand.models[b];
+        const nameA = getItemName(modelA, a);
+        const nameB = getItemName(modelB, b);
         return nameA.localeCompare(nameB);
     });
     
     console.log('🔄 Заполняю модели:', sortedModels.length);
     
     for (const modelKey of sortedModels) {
-        const model = models[modelKey];
+        const model = brand.models[modelKey];
         const option = document.createElement('option');
         option.value = modelKey;
-        
-        // Если модель — объект с полем name, используем его
-        if (model && typeof model === 'object' && model.name) {
-            option.textContent = model.name;
-        } else {
-            // Иначе используем ключ
-            option.textContent = modelKey;
-        }
+        option.textContent = getItemName(model, modelKey);
         modelSelect.appendChild(option);
     }
 });
 
 // ============================================================
-// 4. Обработка отправки формы
+// 5. Обработка отправки формы
 // ============================================================
 
 document.getElementById('filterForm').addEventListener('submit', async function(e) {
@@ -180,12 +198,18 @@ document.getElementById('filterForm').addEventListener('submit', async function(
         return;
     }
     
-    // Получаем ID марки и модели
-    const brandId = brand.id;
-    // Если модель — объект с полем id, используем его
-    const modelId = (model && typeof model === 'object' && model.id) || model;
+    const brandId = getItemId(brand);
+    const modelId = getItemId(model);
     
-    console.log('🔗 Формирую ссылку для:', brand.name || brandKey, model.name || modelKey);
+    if (!brandId || !modelId) {
+        showError('Ошибка: не удалось получить ID марки или модели');
+        return;
+    }
+    
+    const brandName = getItemName(brand, brandKey);
+    const modelName = getItemName(model, modelKey);
+    
+    console.log('🔗 Формирую ссылку для:', brandName, modelName);
     console.log('   brandId:', brandId, 'modelId:', modelId);
     
     let url = `https://cars.av.by/filter?brands[0][brand]=${brandId}&brands[0][model]=${modelId}`;
@@ -227,8 +251,8 @@ document.getElementById('filterForm').addEventListener('submit', async function(
             tg.sendData(JSON.stringify({
                 action: 'track',
                 url: url,
-                brand: brand.name || brandKey,
-                model: (model && typeof model === 'object' && model.name) || modelKey
+                brand: brandName,
+                model: modelName
             }));
             tg.close();
         } else {
@@ -246,7 +270,7 @@ document.getElementById('filterForm').addEventListener('submit', async function(
 });
 
 // ============================================================
-// 5. Вспомогательные функции
+// 6. Вспомогательные функции
 // ============================================================
 
 function showError(message) {
@@ -257,7 +281,7 @@ function showError(message) {
 }
 
 // ============================================================
-// 6. Инициализация
+// 7. Инициализация
 // ============================================================
 
 async function init() {
