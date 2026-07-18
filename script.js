@@ -33,7 +33,7 @@ async function loadData() {
 }
 
 // ============================================================
-// 2. Вспомогательная функция для безопасного получения названия
+// 2. Вспомогательные функции
 // ============================================================
 
 function getItemName(item, defaultName) {
@@ -68,11 +68,30 @@ function populateBrands() {
         return;
     }
     
-    // Сортируем марки по названию
-    const sortedBrands = Object.keys(brandsData.brands).sort((a, b) => {
-        const nameA = getItemName(brandsData.brands[a], a);
-        const nameB = getItemName(brandsData.brands[b], b);
-        return nameA.localeCompare(nameB);
+    const brandKeys = Object.keys(brandsData.brands);
+    console.log('🔄 Сортирую марки:', brandKeys.length);
+    
+    // Простая сортировка с проверкой
+    const sortedBrands = brandKeys.sort(function(a, b) {
+        const brandA = brandsData.brands[a];
+        const brandB = brandsData.brands[b];
+        
+        let nameA = a;
+        let nameB = b;
+        
+        if (brandA && typeof brandA === 'object') {
+            nameA = brandA.name || a;
+        }
+        if (brandB && typeof brandB === 'object') {
+            nameB = brandB.name || b;
+        }
+        
+        try {
+            return nameA.localeCompare(nameB);
+        } catch (e) {
+            console.warn('Ошибка сортировки:', a, b, e);
+            return 0;
+        }
     });
     
     console.log('🔄 Заполняю марки:', sortedBrands.length);
@@ -81,7 +100,11 @@ function populateBrands() {
         const brand = brandsData.brands[key];
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = getItemName(brand, key);
+        if (brand && typeof brand === 'object' && brand.name) {
+            option.textContent = brand.name;
+        } else {
+            option.textContent = key;
+        }
         select.appendChild(option);
     }
 }
@@ -114,7 +137,6 @@ document.getElementById('brandSelect').addEventListener('change', function() {
     currentBrandId = getItemId(brand);
     
     console.log('📌 ID марки:', currentBrandId);
-    console.log('📌 Данные марки:', brand);
     
     // Проверяем, есть ли модели
     if (!brand.models) {
@@ -131,17 +153,33 @@ document.getElementById('brandSelect').addEventListener('change', function() {
         return;
     }
     
-    modelSelect.disabled = false;
-    modelSelect.innerHTML = '<option value="">Выберите модель</option>';
+    console.log('🔄 Модели для', brandKey, ':', modelKeys);
     
-    // Сортируем модели по названию
-    const sortedModels = modelKeys.sort((a, b) => {
+    // Сортируем модели с проверкой
+    const sortedModels = modelKeys.sort(function(a, b) {
         const modelA = brand.models[a];
         const modelB = brand.models[b];
-        const nameA = getItemName(modelA, a);
-        const nameB = getItemName(modelB, b);
-        return nameA.localeCompare(nameB);
+        
+        let nameA = a;
+        let nameB = b;
+        
+        if (modelA && typeof modelA === 'object') {
+            nameA = modelA.name || a;
+        }
+        if (modelB && typeof modelB === 'object') {
+            nameB = modelB.name || b;
+        }
+        
+        try {
+            return nameA.localeCompare(nameB);
+        } catch (e) {
+            console.warn('Ошибка сортировки модели:', a, b, e);
+            return 0;
+        }
     });
+    
+    modelSelect.disabled = false;
+    modelSelect.innerHTML = '<option value="">Выберите модель</option>';
     
     console.log('🔄 Заполняю модели:', sortedModels.length);
     
@@ -149,7 +187,14 @@ document.getElementById('brandSelect').addEventListener('change', function() {
         const model = brand.models[modelKey];
         const option = document.createElement('option');
         option.value = modelKey;
-        option.textContent = getItemName(model, modelKey);
+        
+        if (model && typeof model === 'object' && model.name) {
+            option.textContent = model.name;
+        } else if (typeof model === 'string') {
+            option.textContent = model;
+        } else {
+            option.textContent = modelKey;
+        }
         modelSelect.appendChild(option);
     }
 });
